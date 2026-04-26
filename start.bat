@@ -1,17 +1,20 @@
 @echo off
-echo [arc-llm-chat] Ortam hazırlanıyor...
+setlocal
 
-call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat" > nul 2>&1
+echo [arc-ai-chat] Desktop uygulamasi baslatiliyor...
 
-if exist ".venv\Scripts\activate.bat" (
-    call .venv\Scripts\activate.bat
+if not exist "backend\.venv\Scripts\uvicorn.exe" (
+    echo [arc-ai-chat] Backend sanal ortami bulunamadi.
+    echo [arc-ai-chat] Once backend gereksinimlerini kurun.
+    pause
+    exit /b 1
 )
 
-echo [arc-llm-chat] Sunucu başlatılıyor...
-echo [arc-llm-chat] Tarayıcıdan: http://localhost:7860
-echo.
+if not exist "node_modules\electron" (
+    echo [arc-ai-chat] Electron bagimliliklari eksik.
+    echo [arc-ai-chat] Once proje kokunde npm install calistirin.
+    pause
+    exit /b 1
+)
 
-cd backend
-uvicorn main:app --host 0.0.0.0 --port 7860 --reload
-
-pause
+npm.cmd run dev

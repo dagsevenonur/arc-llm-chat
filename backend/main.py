@@ -14,7 +14,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
 LLAMA_SERVER_EXE = r"..\llama-sycl-b8931\llama-server.exe"
-MODEL_PATH       = r"..\llama-sycl-b8931\models\Llama-3.2-1B-Instruct-Q4_K_M.gguf"
+MODEL_PATH       = r"..\llama-sycl-b8931\models\Qwen3.5-9B-Q4_K_M.gguf"
 LLAMA_PORT       = 8080
 LLAMA_URL        = f"http://127.0.0.1:{LLAMA_PORT}"
 CONTEXT_SIZE     = 2048

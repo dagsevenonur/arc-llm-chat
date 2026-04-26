@@ -1,3 +1,5 @@
 llama-sycl-b8931
 venv/
 __pycache__/
+node_modules/
+backend/.venv/

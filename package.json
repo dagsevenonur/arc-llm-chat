@@ -1,0 +1,13 @@
+{
+  "name": "arc-ai-chat-desktop",
+  "version": "0.1.0",
+  "description": "Desktop chat shell for the Intel Arc B580 llama.cpp SYCL backend.",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "electron .",
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "latest"
+  }
+}
