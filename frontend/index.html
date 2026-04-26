@@ -3,23 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Arc LLM Chat</title>
+<title>Arc Chat</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
   :root {
-    --bg:        #0a0c10;
-    --bg2:       #10141c;
-    --bg3:       #161b26;
-    --border:    #1e2535;
-    --arc:       #00c8ff;
-    --arc-dim:   #0077aa;
-    --arc-glow:  rgba(0,200,255,0.12);
-    --text:      #c8d8e8;
-    --text-dim:  #556070;
-    --user-bg:   #0d1929;
-    --ai-bg:     #0a1018;
-    --radius:    10px;
+    --bg:         #ffffff;
+    --bg-soft:    #f8f9fa;
+    --border:     #e1e4e8;
+    --text:       #1f2937;
+    --text-dim:   #6b7280;
+    --accent:     #3b82f6;
+    --accent-dim: #60a5fa;
+    --user-bg:    #eff6ff;
+    --ai-bg:      #f9fafb;
+  }
+
+  [data-theme="dark"] {
+    --bg:         #0f1419;
+    --bg-soft:    #1a1f2e;
+    --border:     #2d3748;
+    --text:       #e4e7eb;
+    --text-dim:   #9ca3af;
+    --accent:     #60a5fa;
+    --accent-dim: #93c5fd;
+    --user-bg:    #1e3a5f;
+    --ai-bg:      #1a1f2e;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,270 +36,247 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Inter', -apple-system, sans-serif;
     height: 100dvh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition: background .2s, color .2s;
   }
 
-  /* ── Header ── */
   header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 14px 20px;
-    background: var(--bg2);
+    gap: 16px;
+    padding: 16px 24px;
+    background: var(--bg);
     border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
   }
 
   .logo {
     width: 32px; height: 32px;
-    background: var(--arc);
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    background: var(--accent);
+    border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    animation: pulse 3s ease-in-out infinite;
+    font-weight: 600; font-size: 16px; color: white;
   }
 
-  @keyframes pulse {
-    0%,100% { box-shadow: 0 0 0 0 var(--arc-glow); }
-    50%      { box-shadow: 0 0 16px 4px var(--arc-glow); }
-  }
-
-  .title-block h1 {
+  h1 {
     font-size: 15px;
-    font-weight: 500;
-    letter-spacing: .04em;
-    color: var(--arc);
-  }
-  .title-block span {
-    font-size: 11px;
-    color: var(--text-dim);
-    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    color: var(--text);
   }
 
-  #status-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: #334;
+  .status {
+    display: flex; align-items: center; gap: 8px;
     margin-left: auto;
-    transition: background .3s, box-shadow .3s;
-  }
-  #status-dot.ok  { background: #00e676; box-shadow: 0 0 8px #00e676; }
-  #status-dot.err { background: #ff5252; box-shadow: 0 0 8px #ff5252; }
-
-  #status-text {
-    font-size: 11px;
-    font-family: 'IBM Plex Mono', monospace;
-    color: var(--text-dim);
+    font-size: 13px; color: var(--text-dim);
   }
 
-  /* ── Messages ── */
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text-dim);
+    transition: background .3s;
+  }
+  .status-dot.ok  { background: #10b981; }
+  .status-dot.err { background: #ef4444; }
+
+  #theme-toggle {
+    width: 36px; height: 36px;
+    border: none; background: var(--bg-soft);
+    border-radius: 8px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s;
+  }
+  #theme-toggle:hover { background: var(--border); }
+  #theme-toggle svg { width: 18px; height: 18px; fill: var(--text-dim); }
+
   #messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 24px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    flex: 1; overflow-y: auto;
+    padding: 24px;
+    display: flex; flex-direction: column; gap: 16px;
     scroll-behavior: smooth;
   }
 
-  #messages::-webkit-scrollbar { width: 4px; }
+  #messages::-webkit-scrollbar { width: 6px; }
   #messages::-webkit-scrollbar-track { background: transparent; }
-  #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  #messages::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 
-  .msg-row {
-    display: flex;
-    padding: 4px 20px;
-    animation: fadeUp .2s ease;
+  .msg {
+    display: flex; gap: 12px;
+    animation: fadeIn .3s ease;
   }
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(8px); }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  .msg-row.user  { justify-content: flex-end; }
-  .msg-row.ai    { justify-content: flex-start; }
+  .msg.user { justify-content: flex-end; }
+  .msg.user .avatar { order: 2; }
+  .msg.user .content { align-items: flex-end; }
+
+  .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px; font-weight: 500; color: var(--text-dim);
+  }
+
+  .content {
+    display: flex; flex-direction: column; gap: 6px;
+    max-width: 65%;
+  }
 
   .bubble {
-    max-width: min(72%, 640px);
-    padding: 11px 15px;
-    border-radius: var(--radius);
-    font-size: 14px;
-    line-height: 1.65;
-    white-space: pre-wrap;
-    word-break: break-word;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px; line-height: 1.6;
+    white-space: pre-wrap; word-break: break-word;
   }
 
-  .msg-row.user .bubble {
+  .msg.user .bubble {
     background: var(--user-bg);
-    border: 1px solid var(--arc-dim);
-    color: #ddeeff;
-    border-bottom-right-radius: 3px;
-  }
-
-  .msg-row.ai .bubble {
-    background: var(--ai-bg);
-    border: 1px solid var(--border);
     color: var(--text);
-    border-bottom-left-radius: 3px;
+    border: 1px solid var(--accent-dim);
   }
 
-  .role-label {
-    font-size: 10px;
-    font-family: 'IBM Plex Mono', monospace;
-    color: var(--text-dim);
-    margin-bottom: 5px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+  .msg.ai .bubble {
+    background: var(--ai-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
   }
 
-  .msg-col { display: flex; flex-direction: column; }
-  .msg-row.user .msg-col { align-items: flex-end; }
-
-  /* stats badge */
-  .stats {
-    font-size: 10px;
-    font-family: 'IBM Plex Mono', monospace;
-    color: var(--arc-dim);
-    margin-top: 4px;
-    padding: 2px 6px;
-    background: rgba(0,200,255,.05);
-    border-radius: 4px;
-    width: fit-content;
+  .meta {
+    font-size: 12px; color: var(--text-dim);
+    padding: 0 4px;
   }
 
-  /* thinking indicator */
   .thinking .bubble {
-    display: flex; gap: 5px; align-items: center;
-    padding: 14px 18px;
+    display: flex; gap: 6px; align-items: center; padding: 16px;
   }
   .dot {
     width: 6px; height: 6px; border-radius: 50%;
-    background: var(--arc);
-    animation: blink 1.2s ease-in-out infinite;
+    background: var(--text-dim);
+    animation: bounce 1.2s ease-in-out infinite;
   }
-  .dot:nth-child(2) { animation-delay: .2s; }
-  .dot:nth-child(3) { animation-delay: .4s; }
-  @keyframes blink {
-    0%,80%,100% { opacity: .2; transform: scale(.8); }
-    40%         { opacity: 1;  transform: scale(1.2); }
+  .dot:nth-child(2) { animation-delay: .15s; }
+  .dot:nth-child(3) { animation-delay: .3s; }
+  @keyframes bounce {
+    0%,60%,100% { transform: translateY(0); opacity: .4; }
+    30% { transform: translateY(-8px); opacity: 1; }
   }
 
-  /* empty state */
   #empty {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    color: var(--text-dim);
-    pointer-events: none;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 12px; color: var(--text-dim);
   }
-  #empty .big { font-size: 48px; opacity: .15; }
-  #empty p { font-size: 13px; font-family: 'IBM Plex Mono', monospace; }
+  #empty svg { width: 48px; height: 48px; opacity: .2; fill: var(--text-dim); }
+  #empty p { font-size: 14px; }
 
-  /* ── Input bar ── */
   footer {
-    padding: 14px 20px;
-    background: var(--bg2);
+    padding: 16px 24px;
+    background: var(--bg);
     border-top: 1px solid var(--border);
-    flex-shrink: 0;
   }
 
-  .input-row {
-    display: flex;
-    gap: 10px;
-    align-items: flex-end;
-    background: var(--bg3);
+  .input-container {
+    display: flex; gap: 8px; align-items: flex-end;
+    background: var(--bg-soft);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px 14px;
-    transition: border-color .2s;
+    border-radius: 12px; padding: 12px;
+    transition: border-color .2s, box-shadow .2s;
   }
-  .input-row:focus-within { border-color: var(--arc-dim); }
+  .input-container:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+  }
 
   #input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
+    flex: 1; background: transparent;
+    border: none; outline: none;
     color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 14px;
-    resize: none;
-    max-height: 140px;
-    line-height: 1.5;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px; resize: none;
+    max-height: 120px; line-height: 1.5;
   }
   #input::placeholder { color: var(--text-dim); }
 
   #send-btn {
-    background: var(--arc);
-    border: none;
-    border-radius: 7px;
+    background: var(--accent);
+    border: none; border-radius: 8px;
     width: 36px; height: 36px;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     transition: opacity .2s, transform .1s;
   }
-  #send-btn:hover   { opacity: .85; }
-  #send-btn:active  { transform: scale(.93); }
-  #send-btn:disabled{ opacity: .3; cursor: default; }
-  #send-btn svg { fill: #000; width: 16px; height: 16px; }
+  #send-btn:hover { opacity: .9; }
+  #send-btn:active { transform: scale(.95); }
+  #send-btn:disabled { opacity: .4; cursor: not-allowed; }
+  #send-btn svg { fill: white; width: 18px; height: 18px; }
 
-  .footer-meta {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 8px;
-    font-size: 11px;
-    font-family: 'IBM Plex Mono', monospace;
-    color: var(--text-dim);
+  .footer-actions {
+    display: flex; justify-content: space-between;
+    align-items: center; margin-top: 12px;
   }
+
+  .model-info { font-size: 12px; color: var(--text-dim); }
 
   #clear-btn {
     background: none; border: none;
-    color: var(--text-dim);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    cursor: pointer;
-    padding: 0;
+    color: var(--text-dim); font-size: 13px;
+    cursor: pointer; padding: 6px 12px;
+    border-radius: 6px; transition: background .2s;
   }
-  #clear-btn:hover { color: var(--text); }
+  #clear-btn:hover { background: var(--bg-soft); }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo"></div>
-  <div class="title-block">
-    <h1>Arc LLM Chat</h1>
-    <span>Intel Arc B580 · SYCL · llama.cpp</span>
+  <div class="logo">A</div>
+  <h1>Arc Chat</h1>
+  <div class="status">
+    <span id="status-text">bağlanıyor...</span>
+    <div class="status-dot" id="status-dot"></div>
   </div>
-  <span id="status-text">bağlanıyor...</span>
-  <div id="status-dot"></div>
+  <button id="theme-toggle" aria-label="Tema değiştir">
+    <svg id="sun-icon" viewBox="0 0 24 24" style="display:none">
+      <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+    <svg id="moon-icon" viewBox="0 0 24 24">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  </button>
 </header>
 
 <div id="messages">
   <div id="empty">
-    <div class="big">⬡</div>
-    <p>// Arc LLM Chat hazır</p>
-    <p>// GPU: Intel Arc B580 (12 GB)</p>
+    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <p>Henüz mesaj yok</p>
   </div>
 </div>
 
 <footer>
-  <div class="input-row">
-    <textarea id="input" rows="1" placeholder="Mesaj yaz... (Enter göndер, Shift+Enter yeni satır)"></textarea>
-    <button id="send-btn" title="Gönder">
-      <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+  <div class="input-container">
+    <textarea id="input" rows="1" placeholder="Mesaj yaz..."></textarea>
+    <button id="send-btn">
+      <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
     </button>
   </div>
-  <div class="footer-meta">
-    <span id="model-label">model yükleniyor...</span>
-    <button id="clear-btn">sohbeti temizle</button>
+  <div class="footer-actions">
+    <span class="model-info" id="model-info">yükleniyor...</span>
+    <button id="clear-btn">Temizle</button>
   </div>
 </footer>
 
@@ -302,25 +288,48 @@ const sendBtn    = document.getElementById('send-btn');
 const emptyEl    = document.getElementById('empty');
 const statusDot  = document.getElementById('status-dot');
 const statusText = document.getElementById('status-text');
-const modelLabel = document.getElementById('model-label');
+const modelInfo  = document.getElementById('model-info');
 const clearBtn   = document.getElementById('clear-btn');
+const themeBtn   = document.getElementById('theme-toggle');
+const sunIcon    = document.getElementById('sun-icon');
+const moonIcon   = document.getElementById('moon-icon');
 
-let history = [];   // {role, content}[]
+let history = [];
 let busy    = false;
 
+// ── Tema ──────────────────────────────────────────────────────────────────────
+const theme = localStorage.getItem('theme') || 'light';
+document.documentElement.dataset.theme = theme;
+updateThemeIcon();
+
+themeBtn.addEventListener('click', () => {
+  const current = document.documentElement.dataset.theme;
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem('theme', next);
+  updateThemeIcon();
+});
+
+function updateThemeIcon() {
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  sunIcon.style.display  = isDark ? 'block' : 'none';
+  moonIcon.style.display = isDark ? 'none' : 'block';
+}
+
+// ── Sağlık ───────────────────────────────────────────────────────────────────
 async function checkHealth() {
   try {
     const r = await fetch(`${API}/health`);
     const d = await r.json();
     if (d.backend === 'ok' && d.llama_server === 'ok') {
-      statusDot.className = 'ok';
+      statusDot.className = 'status-dot ok';
       statusText.textContent = 'bağlı';
-      modelLabel.textContent = d.model + ' · ' + d.gpu;
+      modelInfo.textContent = d.model;
     } else throw new Error();
   } catch {
-    statusDot.className = 'err';
+    statusDot.className = 'status-dot err';
     statusText.textContent = 'bağlantı yok';
-    modelLabel.textContent = 'sunucu çalışmıyor';
+    modelInfo.textContent = 'sunucu çalışmıyor';
   }
 }
 checkHealth();
@@ -329,48 +338,47 @@ setInterval(checkHealth, 10000);
 function addMessage(role, content, stats = null) {
   if (emptyEl) emptyEl.style.display = 'none';
 
-  const row = document.createElement('div');
-  row.className = `msg-row ${role === 'user' ? 'user' : 'ai'}`;
+  const msg = document.createElement('div');
+  msg.className = `msg ${role === 'user' ? 'user' : 'ai'}`;
 
-  const col = document.createElement('div');
-  col.className = 'msg-col';
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.textContent = role === 'user' ? 'S' : 'A';
 
-  const label = document.createElement('div');
-  label.className = 'role-label';
-  label.textContent = role === 'user' ? 'sen' : 'arc';
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'content';
 
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
   bubble.textContent = content;
 
-  col.appendChild(label);
-  col.appendChild(bubble);
+  contentDiv.appendChild(bubble);
 
   if (stats) {
-    const s = document.createElement('div');
-    s.className = 'stats';
-    s.textContent = stats;
-    col.appendChild(s);
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = stats;
+    contentDiv.appendChild(meta);
   }
 
-  row.appendChild(col);
-  messagesEl.appendChild(row);
+  msg.appendChild(avatar);
+  msg.appendChild(contentDiv);
+  messagesEl.appendChild(msg);
   messagesEl.scrollTop = messagesEl.scrollHeight;
-  return bubble;
 }
 
 function addThinking() {
-  const row = document.createElement('div');
-  row.className = 'msg-row ai thinking';
-  row.id = 'thinking';
-  row.innerHTML = `
-    <div class="msg-col">
-      <div class="role-label">arc</div>
+  const msg = document.createElement('div');
+  msg.className = 'msg ai thinking';
+  msg.id = 'thinking';
+  msg.innerHTML = `
+    <div class="avatar">A</div>
+    <div class="content">
       <div class="bubble">
         <div class="dot"></div><div class="dot"></div><div class="dot"></div>
       </div>
     </div>`;
-  messagesEl.appendChild(row);
+  messagesEl.appendChild(msg);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
@@ -443,7 +451,7 @@ inputEl.addEventListener('keydown', e => {
 
 inputEl.addEventListener('input', () => {
   inputEl.style.height = 'auto';
-  inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
 });
 
 clearBtn.addEventListener('click', () => {
